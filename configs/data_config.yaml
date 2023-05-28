@@ -1,0 +1,7 @@
+train_data_path: "./data/train"
+validate_data_path: "./data/test"
+human_label: "H"
+is_uncased: False
+pretrained_tokenizer_path: "microsoft/mdeberta-v3-base"
+max_token_number: 100
+batch_size: 32

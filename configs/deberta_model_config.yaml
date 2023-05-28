@@ -1,0 +1,5 @@
+pretrained_model_path: "microsoft/mdeberta-v3-base"
+lr: 0.0001
+epochs: 20
+div_factor: 10000
+log_dir: "./deberta-cased"
