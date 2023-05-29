@@ -2,6 +2,6 @@ train_data_path: "./data/multi-task/train.csv"
 validate_data_path: "./data/multi-task/val.csv"
 human_label: "Human"
 is_uncased: False
-pretrained_tokenizer_path: "microsoft/mdeberta-v3-base"
+pretrained_tokenizer_path: null # "microsoft/mdeberta-v3-base"
 max_token_number: 100
 batch_size: 32

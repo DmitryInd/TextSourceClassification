@@ -1,6 +1,7 @@
 from typing import List
 
 import sentencepiece as spm
+from pathlib import Path
 from transformers import DebertaV2Tokenizer
 
 
@@ -69,10 +70,14 @@ class SentencePieceTokenizer:
         self.eos_token = "[SEP]"
         self.pad_token = "[PAD]"
         # Save training sentences to file
+        if not Path("./data/spm/train/").exists():
+            Path("./data/spm/train/").mkdir(parents=True)
         with open("./data/spm/train/sentences.txt", "w", encoding="utf-8") as file:
             for sentence in sentence_list:
                 file.write(sentence)
         # Training
+        if not Path("./data/spm/saved/").exists():
+            Path("./data/spm/saved/").mkdir(parents=True)
         spm.SentencePieceTrainer.Train(
             input="./data/spm/train/sentences.txt",
             model_prefix='./data/spm/saved/spModel',
@@ -81,7 +86,7 @@ class SentencePieceTokenizer:
             unk_id=1,
             bos_id=2,
             eos_id=3,
-            pad_piece="<pad>",  # self.pad_token,
+            pad_piece=self.pad_token,
             unk_piece=self.unknown_token,
             bos_piece=self.sos_token,
             eos_piece=self.eos_token,
@@ -89,7 +94,11 @@ class SentencePieceTokenizer:
         )
         # Initialization
         self._tokenizer = DebertaV2Tokenizer(
-            vocab_file="spModel.model"
+            vocab_file="./data/spm/saved/spModel.model",
+            pad_token=self.pad_token,
+            unk_token=self.unknown_token,
+            bos_token=self.sos_token,
+            eos_token=self.eos_token
         )
         return self._tokenizer
 
