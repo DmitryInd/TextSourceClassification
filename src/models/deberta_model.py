@@ -2,7 +2,7 @@ import torch
 import pytorch_lightning as pl
 from torch import nn
 from torchmetrics import Recall, Precision, F1Score
-from transformers import DebertaModel
+from transformers import DebertaV2Model
 
 
 class PretrainedDeBertaNER(pl.LightningModule):
@@ -10,7 +10,7 @@ class PretrainedDeBertaNER(pl.LightningModule):
                  lr: float, total_steps: int, div_factor: int, human_index: int, is_pooling=False):
         super().__init__()
         self.save_hyperparameters()
-        self.model = DebertaModel.from_pretrained(pretrained_name)
+        self.model = DebertaV2Model.from_pretrained(pretrained_name)
         self.pooling = nn.AdaptiveAvgPool1d(1) if is_pooling else lambda x: x[..., 0]
         self.activation = nn.ReLU()
         self.head = nn.Linear(self.model.config.hidden_size, num_classes)
