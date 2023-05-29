@@ -6,21 +6,19 @@ from tokenizers import decoders
 from tokenizers.models import BPE
 from tokenizers.pre_tokenizers import Whitespace
 from tokenizers.trainers import BpeTrainer
-from transformers import DebertaTokenizer, PreTrainedTokenizer
+from transformers import DebertaV2Tokenizer, PreTrainedTokenizer
 
 
 class BPETokenizer:
-    def __init__(self, sentence_list: List[str], other_id: int, pad_flag: bool,
+    def __init__(self, sentence_list: List[str], pad_flag: bool,
                  max_sent_len: int = None, pretrained_name: str = None):
         """
         :param sentence_list: список предложений для обучения, разбитых на размеченные части
-        :param other_id: id класса 'other'
         :param pad_flag: нужно ли приводить последовательности токенов к одной длине
         :param max_sent_len: максимальная допустимая длина предложений в токенах (+2)
         :param pretrained_name: путь до сохранённых параметров или название токенизатора
         """
         # Initialisation
-        self.other_id = other_id
         self.max_sent_len = max_sent_len
         self.pad_flag = pad_flag
         if pretrained_name is None or Path(pretrained_name).exists():
@@ -106,7 +104,7 @@ class BPETokenizer:
         # Pretrained flag
         self._downloaded = True
         # Download
-        self._tokenizer = DebertaTokenizer.from_pretrained(pretrained_name)
+        self._tokenizer = DebertaV2Tokenizer.from_pretrained(pretrained_name)
         # Special tokens
         self.unknown_token = self._tokenizer.unk_token
         self.sos_token = self._tokenizer.cls_token
