@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-from datasets.tokenization import BPETokenizer
+from datasets.tokenization import SentencePieceTokenizer
 
 
 class CSVDataset(Dataset):
@@ -28,11 +28,11 @@ class CSVDataset(Dataset):
         self.label2index = {label: i for i, label in enumerate(self.index2label)}
         self._tokenized_target_list = [self.label2index[label] for label in tokenized_target_list]
         # Data tokenization
-        self.tokenizer = BPETokenizer(tokenized_source_list,
-                                      True,
-                                      max_sent_len=max_length,
-                                      pretrained_name=pretrained_tokenizer)
-        self._tokenized_source_list = [self.tokenizer(s) for s in zip(tokenized_source_list)]
+        self.tokenizer = SentencePieceTokenizer(tokenized_source_list,
+                                                True,
+                                                max_sent_len=max_length,
+                                                pretrained_name=pretrained_tokenizer)
+        self._tokenized_source_list = [self.tokenizer(s) for s in tokenized_source_list]
         self.device = device
 
     @staticmethod

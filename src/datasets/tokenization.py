@@ -1,15 +1,10 @@
-from pathlib import Path
 from typing import List
 
-from tokenizers import Tokenizer
-from tokenizers import decoders
-from tokenizers.models import BPE
-from tokenizers.pre_tokenizers import Whitespace
-from tokenizers.trainers import BpeTrainer
-from transformers import DebertaV2Tokenizer, PreTrainedTokenizer
+import sentencepiece as spm
+from transformers import DebertaV2Tokenizer
 
 
-class BPETokenizer:
+class SentencePieceTokenizer:
     def __init__(self, sentence_list: List[str], pad_flag: bool,
                  max_sent_len: int = None, pretrained_name: str = None):
         """
@@ -21,8 +16,8 @@ class BPETokenizer:
         # Initialisation
         self.max_sent_len = max_sent_len
         self.pad_flag = pad_flag
-        if pretrained_name is None or Path(pretrained_name).exists():
-            self._tokenizer = self._train(sentence_list, pretrained_name)
+        if pretrained_name is None:
+            self._tokenizer = self._train(sentence_list)
         else:
             self._tokenizer = self._load(pretrained_name)
         if self.pad_flag and self.max_sent_len is None:
@@ -42,14 +37,14 @@ class BPETokenizer:
             token_id_list = self._tokenizer.encode(sentence, padding=False, truncation=False)[1:-1]
         else:
             token_id_list = self._tokenizer.encode(sentence).ids
-        token_id_list = [self.word2index[self.sos_token]] + token_id_list
-        if padding and (self.max_sent_len is not None) and (len(token_id_list) > self.max_sent_len + 1):
-            token_id_list = self._truncate(token_id_list)
-            if len(token_id_list) < self.max_sent_len + 1:
-                pad_len = self.max_sent_len + 1 - len(token_id_list)
+        token_id_list = [self.word2index[self.sos_token]] + token_id_list + [self.word2index[self.eos_token]]
+        if padding and self.max_sent_len is not None:
+            if len(token_id_list) > self.max_sent_len + 2:
+                token_id_list = token_id_list[:self.max_sent_len + 2]
+            elif len(token_id_list) < self.max_sent_len + 2:
+                pad_len = self.max_sent_len + 2 - len(token_id_list)
                 token_id_list.extend([self.word2index[self.pad_token]] * pad_len)
 
-        token_id_list.append(self.word2index[self.eos_token])
         return token_id_list
 
     def decode(self, token_id_list: List[int]):
@@ -59,24 +54,13 @@ class BPETokenizer:
         """
         return self._tokenizer.decode(token_id_list, skip_special_tokens=True).split()
 
-    def _truncate(self, token_id_list: List[int]):
-        """
-        Возвращает последовательность токенов, обрезанную до максимального размера без дробления слова в конце
-        """
-        for i, token_id in enumerate(reversed(token_id_list)):
-            if self.index2word[token_id][-4:] != "</w>" and len(token_id_list) - i <= self.max_sent_len + 1:
-                token_id_list = token_id_list[:-i]
-                break
-
-        return token_id_list
-
     def _get_max_length_in_tokens(self, sentence_list: List[str]) -> int:
         max_length = 0
         for sentence in sentence_list:
             max_length = max(max_length, len(self(sentence, False)))
         return max_length
 
-    def _train(self, sentence_list: List[str], path_to_pretrained: str = None) -> Tokenizer:
+    def _train(self, sentence_list: List[str]) -> DebertaV2Tokenizer:
         # Pretrained flag
         self._downloaded = False
         # Special tokens
@@ -84,23 +68,32 @@ class BPETokenizer:
         self.sos_token = "[CLS]"
         self.eos_token = "[SEP]"
         self.pad_token = "[PAD]"
-        # Initialization
-        if path_to_pretrained is None:
-            self._tokenizer = Tokenizer(BPE(unk_token=self.unknown_token))
-        else:
-            self._tokenizer = Tokenizer(BPE.from_file(path_to_pretrained))
-        self._tokenizer.pre_tokenizer = Whitespace()
-        self._tokenizer.decoder = decoders.BPEDecoder()
+        # Save training sentences to file
+        with open("./data/spm/train/sentences.txt", "w", encoding="utf-8") as file:
+            for sentence in sentence_list:
+                file.write(sentence)
         # Training
-        if path_to_pretrained is None:
-            trainer = BpeTrainer(
-                special_tokens=[self.unknown_token, self.sos_token, self.eos_token, self.pad_token],
-                end_of_word_suffix="</w>"
-            )
-            self._tokenizer.train_from_iterator(sentence_list, trainer)
+        spm.SentencePieceTrainer.Train(
+            input="./data/spm/train/sentences.txt",
+            model_prefix='./data/spm/saved/spModel',
+            vocab_size=10000,
+            pad_id=0,
+            unk_id=1,
+            bos_id=2,
+            eos_id=3,
+            pad_piece="<pad>",  # self.pad_token,
+            unk_piece=self.unknown_token,
+            bos_piece=self.sos_token,
+            eos_piece=self.eos_token,
+            model_type='bpe'
+        )
+        # Initialization
+        self._tokenizer = DebertaV2Tokenizer(
+            vocab_file="spModel.model"
+        )
         return self._tokenizer
 
-    def _load(self, pretrained_name: str) -> PreTrainedTokenizer:
+    def _load(self, pretrained_name: str) -> DebertaV2Tokenizer:
         # Pretrained flag
         self._downloaded = True
         # Download
