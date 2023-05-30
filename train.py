@@ -38,7 +38,8 @@ if __name__ == '__main__':
                                        total_steps=model_config["epochs"] * len(train_dataloader),
                                        div_factor=model_config["div_factor"],
                                        human_index=train_dataset.label2index[data_config["human_label"]])
-    class_checkpoint_callback = ModelCheckpoint(filename='best-{epoch}', monitor='val_recall', mode='max', save_top_k=1)
+    print(class_model)
+    class_checkpoint_callback = ModelCheckpoint(filename='best-{epoch}', monitor='val_acc', mode='max', save_top_k=1)
     trainer_args = {
         "accelerator": "gpu",
         "max_epochs": model_config["epochs"],

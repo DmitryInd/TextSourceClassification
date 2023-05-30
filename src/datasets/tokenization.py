@@ -48,12 +48,12 @@ class SentencePieceTokenizer:
 
         return token_id_list
 
-    def decode(self, token_id_list: List[int]):
+    def decode(self, token_id_list: List[int]) -> str:
         """
         :param token_id_list: последовательность id текстовых токенов (для одного предложения)
-        :return: последовательный список слов из предложения
+        :return: предложение
         """
-        return self._tokenizer.decode(token_id_list, skip_special_tokens=True).split()
+        return self._tokenizer.decode(token_id_list, skip_special_tokens=True)
 
     def _get_max_length_in_tokens(self, sentence_list: List[str]) -> int:
         max_length = 0

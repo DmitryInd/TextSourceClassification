@@ -10,8 +10,8 @@ from tensorboard.backend.event_processing import event_accumulator
 
 class TensorBoardReader:
     def __init__(self, root_path="./"):
-        self.default_metrics_list = ['train_loss', 'train_recall', 'train_precision', 'train_f1',
-                                     'val_loss', 'val_recall', 'val_precision', 'val_f1']
+        self.default_metrics_list = ['train_loss', 'train_acc', 'train_recall',
+                                     'val_loss', 'val_acc', 'val_recall']
         self.root_path = Path(root_path)
         log_dirs = sorted([(self._get_version(p), p) for p in self.root_path.iterdir() if p.is_dir()])
         self.last_log_path = log_dirs[-1][1].__str__()
@@ -56,21 +56,17 @@ class TensorBoardReader:
     def plot_tensorboard_graphics(self, version: int = -1):
         data = self.get_scalars(version)
         subplots = [['val_loss', 'train_loss'],
-                    ['val_recall', 'train_recall'],
-                    ['val_precision', 'train_precision'],
-                    ['val_f1', 'train_f1']]
+                    ['val_acc', 'train_acc'],
+                    ['val_recall', 'train_recall']]
         subplots_titles = [("История ошибки", "Ошибка"),
-                           ("История Recall", "Recall"),
-                           ("История Precision", "Precision"),
-                           ("История $F_1$ score", "$F_1$ score")]
+                           ("История Accuracy", "Accuracy"),
+                           ("История Recall", "Recall")]
         labels = {'train_loss': 'Train',
                   'train_recall': 'Train',
-                  'train_precision': 'Train',
-                  'train_f1': 'Train',
+                  'train_acc': 'Train',
                   'val_loss': 'Valid',
                   'val_recall': 'Valid',
-                  'val_precision': 'Valid',
-                  'val_f1': 'Valid'}
+                  'val_acc': 'Valid'}
 
         fig, axes = plt.subplots(1, len(subplots), figsize=(7*len(subplots), 5))
         for i, (scalar_names, (title, y_label)) in enumerate(zip(subplots, subplots_titles)):

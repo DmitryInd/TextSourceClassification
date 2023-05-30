@@ -1,7 +1,7 @@
 import torch
 import pytorch_lightning as pl
 from torch import nn
-from torchmetrics import Recall, Precision, F1Score
+from torchmetrics import Accuracy, Recall
 from transformers import DebertaV2Model
 
 
@@ -22,9 +22,8 @@ class PretrainedDeBertaNER(pl.LightningModule):
         self.div_factor = div_factor
         self.total_steps = total_steps
         # Metrics
+        self.acc = Accuracy(task="multiclass", num_classes=num_classes)
         self.recall = Recall(task="multiclass", num_classes=num_classes, ignore_index=human_index)
-        self.precision = Precision(task="multiclass", num_classes=num_classes)
-        self.f1_score = F1Score(task="multiclass", num_classes=num_classes)
 
     def forward(self, x):
         x = self.model(x).last_hidden_state.transpose(-1, -2)  # B, L, H -> B, H, L
@@ -46,38 +45,32 @@ class PretrainedDeBertaNER(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
+        _, x, y = batch
         predictions = self(x)  # B, C
         loss = self.criterion(predictions, y)
         hard_pred = torch.argmax(predictions, dim=-1)
+        acc = self.acc(hard_pred, y)
         recall = self.recall(hard_pred, y)
-        precision = self.precision(hard_pred, y)
-        f1 = self.f1_score(hard_pred, y)
         self.log('train_loss', loss.item(), on_step=False, on_epoch=True, logger=True)
+        self.log('train_acc', acc, on_step=False, on_epoch=True, logger=True)
         self.log('train_recall', recall, on_step=False, on_epoch=True, logger=True)
-        self.log('train_precision', precision, on_step=False, on_epoch=True, logger=True)
-        self.log('train_f1', f1, on_step=False, on_epoch=True, logger=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch
+        _, x, y = batch
         predictions = self(x)  # B, C
         loss = self.criterion(predictions, y)
         hard_pred = torch.argmax(predictions, dim=-1)
+        acc = self.acc(hard_pred, y)
         recall = self.recall(hard_pred, y)
-        precision = self.precision(hard_pred, y)
-        f1 = self.f1_score(hard_pred, y)
-        self.log('val_loss', loss, on_epoch=True, prog_bar=True, logger=True)
+        self.log('val_loss', loss.item(), on_step=False, on_epoch=True, logger=True)
+        self.log('val_acc', acc, on_step=False, on_epoch=True, logger=True)
         self.log('val_recall', recall, on_step=False, on_epoch=True, logger=True)
-        self.log('val_precision', precision, on_step=False, on_epoch=True, logger=True)
-        self.log('val_f1', f1, on_step=False, on_epoch=True, logger=True)
 
     def test_step(self, batch, batch_idx):
-        x, y = batch
+        _, x, y = batch
         hard_pred = torch.argmax(self(x), dim=-1)
+        acc = self.acc(hard_pred, y)
         recall = self.recall(hard_pred, y)
-        precision = self.precision(hard_pred, y)
-        f1 = self.f1_score(hard_pred, y)
+        self.log('test_acc', acc, on_step=False, on_epoch=True, logger=True)
         self.log('test_recall', recall, on_step=False, on_epoch=True, logger=True)
-        self.log('test_precision', precision, on_step=False, on_epoch=True, logger=True)
-        self.log('test_f1', f1, on_step=False, on_epoch=True, logger=True)
