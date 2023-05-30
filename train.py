@@ -9,7 +9,7 @@ from transformers import set_seed
 
 sys.path.insert(1, "./src")
 from datasets.class_dataset import CSVDataset
-from models.deberta_model import PretrainedDeBertaNER
+from models.deroberta_model import PretrainedDeRoBertaClass
 from utils.log_reader import TensorBoardReader
 
 if __name__ == '__main__':
@@ -31,13 +31,15 @@ if __name__ == '__main__':
     val_dataloader = DataLoader(val_dataset, shuffle=False,
                                 batch_size=data_config["batch_size"], drop_last=True)
     # Pytorch lightning
-    class_model = PretrainedDeBertaNER(pretrained_name=model_config["pretrained_model_path"],
-                                       encoder_vocab_size=len(train_dataset.tokenizer.index2word),
-                                       num_classes=len(train_dataset.index2label),
-                                       lr=model_config["lr"],
-                                       total_steps=model_config["epochs"] * len(train_dataloader),
-                                       div_factor=model_config["div_factor"],
-                                       human_index=train_dataset.label2index[data_config["human_label"]])
+    class_model = PretrainedDeRoBertaClass(pretrained_name=model_config["pretrained_model_path"],
+                                           model_type=model_config["model_type"],
+                                           encoder_vocab_size=len(train_dataset.tokenizer.index2word),
+                                           num_classes=len(train_dataset.index2label),
+                                           lr=model_config["lr"],
+                                           total_steps=model_config["epochs"] * len(train_dataloader),
+                                           div_factor=model_config["div_factor"],
+                                           human_index=train_dataset.label2index[data_config["human_label"]],
+                                           is_pooling=model_config["is_pooling"])
     print(class_model)
     class_checkpoint_callback = ModelCheckpoint(filename='best-{epoch}', monitor='val_acc', mode='max', save_top_k=1)
     trainer_args = {

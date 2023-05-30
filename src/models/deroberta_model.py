@@ -2,15 +2,20 @@ import torch
 import pytorch_lightning as pl
 from torch import nn
 from torchmetrics import Accuracy, Recall
-from transformers import DebertaV2Model
+from transformers import DebertaV2Model, RobertaModel
 
 
-class PretrainedDeBertaNER(pl.LightningModule):
-    def __init__(self, pretrained_name: str, encoder_vocab_size: int, num_classes: int,
+class PretrainedDeRoBertaClass(pl.LightningModule):
+    def __init__(self, pretrained_name: str, model_type: str, encoder_vocab_size: int, num_classes: int,
                  lr: float, total_steps: int, div_factor: int, human_index: int, is_pooling=False):
         super().__init__()
         self.save_hyperparameters()
-        self.model = DebertaV2Model.from_pretrained(pretrained_name)
+        if model_type == "deberta":
+            self.model = DebertaV2Model.from_pretrained(pretrained_name)
+        elif model_type == "roberta":
+            self.model = RobertaModel.from_pretrained(pretrained_name)
+        else:
+            raise ValueError("Only 'deberta' and 'roberta' types are supported")
         self.pooling = nn.AdaptiveAvgPool1d(1) if is_pooling else lambda x: x[..., 0]
         self.activation = nn.ReLU()
         self.head = nn.Linear(self.model.config.hidden_size, num_classes)

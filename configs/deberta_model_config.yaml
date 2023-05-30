@@ -3,3 +3,5 @@ lr: 0.0001
 epochs: 15
 div_factor: 10000
 log_dir: "./deberta-cased"
+model_type: "deberta"
+is_pooling: False

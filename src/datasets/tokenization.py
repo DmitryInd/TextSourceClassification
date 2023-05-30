@@ -2,7 +2,7 @@ from typing import List
 
 import sentencepiece as spm
 from pathlib import Path
-from transformers import DebertaV2Tokenizer
+from transformers import AutoTokenizer, DebertaV2Tokenizer
 
 
 class SentencePieceTokenizer:
@@ -102,11 +102,11 @@ class SentencePieceTokenizer:
         )
         return self._tokenizer
 
-    def _load(self, pretrained_name: str) -> DebertaV2Tokenizer:
+    def _load(self, pretrained_name: str) -> AutoTokenizer:
         # Pretrained flag
         self._downloaded = True
         # Download
-        self._tokenizer = DebertaV2Tokenizer.from_pretrained(pretrained_name)
+        self._tokenizer = AutoTokenizer.from_pretrained(pretrained_name)
         # Special tokens
         self.unknown_token = self._tokenizer.unk_token
         self.sos_token = self._tokenizer.cls_token

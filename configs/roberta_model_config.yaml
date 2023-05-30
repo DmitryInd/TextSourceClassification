@@ -1,0 +1,7 @@
+pretrained_model_path: "ai-forever/ruRoberta-large"
+lr: 0.0001
+epochs: 15
+div_factor: 10000
+log_dir: "./roberta-cased"
+model_type: "roberta"
+is_pooling: False
