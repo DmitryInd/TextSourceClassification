@@ -34,9 +34,9 @@ if __name__ == '__main__':
     class_model = PretrainedDeRoBertaClass(pretrained_name=model_config["pretrained_model_path"],
                                            model_type=model_config["model_type"],
                                            encoder_vocab_size=len(train_dataset.tokenizer.index2word),
-                                           num_classes=len(train_dataset.index2label),
-                                           lr=model_config["lr"],
+                                           num_classes=len(train_dataset.index2label), lr=model_config["lr"],
                                            total_steps=model_config["epochs"] * len(train_dataloader),
+                                           adaptation_epochs=model_config["adaptation_epochs"],
                                            div_factor=model_config["div_factor"],
                                            human_index=train_dataset.label2index[data_config["human_label"]],
                                            is_pooling=model_config["is_pooling"])

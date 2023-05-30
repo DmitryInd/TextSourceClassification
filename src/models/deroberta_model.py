@@ -7,7 +7,8 @@ from transformers import DebertaV2Model, RobertaModel
 
 class PretrainedDeRoBertaClass(pl.LightningModule):
     def __init__(self, pretrained_name: str, model_type: str, encoder_vocab_size: int, num_classes: int,
-                 lr: float, total_steps: int, div_factor: int, human_index: int, is_pooling=False):
+                 lr: float, total_steps: int, adaptation_epochs: int, div_factor: int,
+                 human_index: int, is_pooling=False):
         super().__init__()
         self.save_hyperparameters()
         if model_type == "deberta":
@@ -16,8 +17,14 @@ class PretrainedDeRoBertaClass(pl.LightningModule):
             self.model = RobertaModel.from_pretrained(pretrained_name)
         else:
             raise ValueError("Only 'deberta' and 'roberta' types are supported")
-        self.pooling = nn.AdaptiveAvgPool1d(1) if is_pooling else lambda x: x[..., 0]
         self.activation = nn.ReLU()
+        # For DeBERTa only AveragePooling was used
+        self.pooling = nn.Sequential[
+            nn.Conv1d(self.model.config.hidden_size, 512, 5, 2),
+            self.activation,
+            nn.Conv1d(512, 256, 5, 2),
+            nn.AdaptiveAvgPool1d(1)
+        ] if is_pooling else lambda x: x
         self.head = nn.Linear(self.model.config.hidden_size, num_classes)
         # Expanding or reducing the space of the encoder embeddings
         self.model.resize_token_embeddings(encoder_vocab_size)
@@ -26,13 +33,15 @@ class PretrainedDeRoBertaClass(pl.LightningModule):
         self.lr = lr
         self.div_factor = div_factor
         self.total_steps = total_steps
+        self.adaptation_epochs = adaptation_epochs
+        self.freeze_params(self.model)  # Adaptation of new parameters to pretrained
         # Metrics
         self.acc = Accuracy(task="multiclass", num_classes=num_classes)
         self.recall = Recall(task="multiclass", num_classes=num_classes, ignore_index=human_index)
 
     def forward(self, x):
         x = self.model(x).last_hidden_state.transpose(-1, -2)  # B, L, H -> B, H, L
-        x = self.pooling(x)  # -> B, H
+        x = self.pooling(x)[..., 0]  # -> B, H
         x = self.activation(x)
         x = self.head(x)  # B, C
         return x
@@ -51,6 +60,8 @@ class PretrainedDeRoBertaClass(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         _, x, y = batch
+        if self.current_epoch >= self.adaptation_epochs:
+            self.freeze_params(self.model, reverse=True)
         predictions = self(x)  # B, C
         loss = self.criterion(predictions, y)
         hard_pred = torch.argmax(predictions, dim=-1)
@@ -59,6 +70,7 @@ class PretrainedDeRoBertaClass(pl.LightningModule):
         self.log('train_loss', loss.item(), on_step=False, on_epoch=True, logger=True)
         self.log('train_acc', acc, on_step=False, on_epoch=True, logger=True)
         self.log('train_recall', recall, on_step=False, on_epoch=True, logger=True)
+        self.step += 1
         return loss
 
     @torch.no_grad()
@@ -81,3 +93,8 @@ class PretrainedDeRoBertaClass(pl.LightningModule):
         recall = self.recall(hard_pred, y)
         self.log('test_acc', acc, on_step=False, on_epoch=True, logger=True)
         self.log('test_recall', recall, on_step=False, on_epoch=True, logger=True)
+
+    @staticmethod
+    def freeze_params(model: nn.Module, reverse=False):
+        for param in model.parameters():
+            param.requires_grad = reverse

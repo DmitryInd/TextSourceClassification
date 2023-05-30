@@ -1,7 +1,8 @@
 pretrained_model_path: "microsoft/mdeberta-v3-base"
 lr: 0.0001
 epochs: 15
+adaptation_epochs: 0
 div_factor: 10000
 log_dir: "./deberta-cased"
 model_type: "deberta"
-is_pooling: False
+is_pooling: True
