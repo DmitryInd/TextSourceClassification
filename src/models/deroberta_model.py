@@ -25,7 +25,7 @@ class PretrainedDeRoBertaClass(pl.LightningModule):
             nn.Conv1d(512, 256, 5, 2),
             nn.AdaptiveAvgPool1d(1)
         ) if is_pooling else lambda x: x
-        self.head = nn.Linear(self.model.config.hidden_size, num_classes)
+        self.head = nn.Linear(256 if is_pooling else self.model.config.hidden_size, num_classes)
         # Expanding or reducing the space of the encoder embeddings
         self.model.resize_token_embeddings(encoder_vocab_size)
         # Parameters of optimization
@@ -71,7 +71,6 @@ class PretrainedDeRoBertaClass(pl.LightningModule):
         self.log('train_loss', loss.item(), on_step=False, on_epoch=True, logger=True)
         self.log('train_acc', acc, on_step=False, on_epoch=True, logger=True)
         self.log('train_recall', recall, on_step=False, on_epoch=True, logger=True)
-        self.step += 1
         return loss
 
     @torch.no_grad()

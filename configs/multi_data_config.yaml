@@ -4,6 +4,6 @@ test_data_path: "./data/multi-task/test.csv"
 pred_data_path: "./data/multi-task/pred.csv"
 human_label: "Human"
 is_uncased: False
-pretrained_tokenizer_path: "microsoft/mdeberta-v3-base"  # "ai-forever/ruRoberta-large"
+pretrained_tokenizer_path: "ai-forever/ruRoberta-large"  # "microsoft/mdeberta-v3-base"
 max_token_number: 100
 batch_size: 48

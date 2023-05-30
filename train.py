@@ -16,7 +16,7 @@ if __name__ == '__main__':
     set_seed(42)
     # Config initialisation
     data_config = yaml.load(open("configs/multi_data_config.yaml", 'r'), Loader=yaml.Loader)
-    model_config = yaml.load(open("configs/deberta_model_config.yaml", 'r'), Loader=yaml.Loader)
+    model_config = yaml.load(open("configs/roberta_model_config.yaml", 'r'), Loader=yaml.Loader)
     # Data processing
     train_dataset = CSVDataset(data_config["train_data_path"],
                                is_uncased=data_config["is_uncased"],
