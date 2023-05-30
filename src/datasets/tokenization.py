@@ -21,11 +21,11 @@ class SentencePieceTokenizer:
             self._tokenizer = self._train(sentence_list)
         else:
             self._tokenizer = self._load(pretrained_name)
-        if self.pad_flag and self.max_sent_len is None:
-            self.max_sent_len = self._get_max_length_in_tokens(sentence_list)
         # Preparing dictionaries mapping tokens and ids
         self.word2index = self._tokenizer.get_vocab()
         self.index2word = {w_id: word for word, w_id in self.word2index.items()}
+        if self.pad_flag and self.max_sent_len is None:
+            self.max_sent_len = self._get_max_length_in_tokens(sentence_list)
 
     def __call__(self, sentence: str, force_padding: bool = None):
         """

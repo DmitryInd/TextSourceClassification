@@ -68,7 +68,7 @@ class Statistics:
         Plot the confusion matrix
         """
         fig, ax = plt.subplots()
-        fig.set_figwidth(25)
+        fig.set_figwidth(35)
         # hide axes
         fig.patch.set_visible(False)
         ax.axis('off')

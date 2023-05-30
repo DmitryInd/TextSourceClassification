@@ -56,6 +56,7 @@ class PretrainedDeBertaNER(pl.LightningModule):
         self.log('train_recall', recall, on_step=False, on_epoch=True, logger=True)
         return loss
 
+    @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         _, x, y = batch
         predictions = self(x)  # B, C
@@ -67,6 +68,7 @@ class PretrainedDeBertaNER(pl.LightningModule):
         self.log('val_acc', acc, on_step=False, on_epoch=True, logger=True)
         self.log('val_recall', recall, on_step=False, on_epoch=True, logger=True)
 
+    @torch.no_grad()
     def test_step(self, batch, batch_idx):
         _, x, y = batch
         hard_pred = torch.argmax(self(x), dim=-1)
