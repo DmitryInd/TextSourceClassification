@@ -53,7 +53,10 @@ class Statistics:
         return list(sorted(list(faults)))
 
     def get_classification_report(self):
-        return classification_report(self.true_labels, self.predicted_labels, target_names=self.index2label)
+        return classification_report(self.true_labels,
+                                     self.predicted_labels,
+                                     target_names=self.index2label,
+                                     digits=4)
 
     @staticmethod
     def _get_rgb_cell_map(float_cell_map: np.ndarray):
